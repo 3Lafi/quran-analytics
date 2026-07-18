@@ -27,6 +27,6 @@ export function createApp() {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
     const port = Number(process.env.PORT ?? 8331);
     createApp().listen(port, () => {
-        console.log(`quran-detailed-analytics API listening on http://localhost:${port}/v1/meta`);
+        console.log(`quran-analytics API listening on http://localhost:${port}/v1/meta`);
     });
 }

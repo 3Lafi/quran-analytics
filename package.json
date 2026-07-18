@@ -1,5 +1,5 @@
 {
-    "name": "quran-detailed-analytics",
+    "name": "quran-analytics",
     "version": "1.0.0",
     "description": "Quran structural analytics dataset + zero-dependency query library and REST API: per-ayah letter/word counts, surah/juz/hizb/rub/ruku/page/manzil divisions, and letter-weighted progress calculations.",
     "type": "module",

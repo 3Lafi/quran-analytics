@@ -1,8 +1,8 @@
 {
   "meta": {
-    "dataset": "quran-detailed-analytics",
+    "dataset": "quran-analytics",
     "version": "1.0.0",
-    "generatedAt": "2026-07-18T02:36:06.083Z",
+    "generatedAt": "2026-07-18T04:00:21.371Z",
     "numbering": "Kufan/Hafs numbering, 6236 ayahs. The unnumbered basmala opening 112 surahs is excluded from all letter/word counts.",
     "counting": "Letters = base rasm letters only (U+0621-063A, U+0641-064A, U+0671); diacritics, dagger alef, tatweel and Quranic annotation marks are not letters. Words = whitespace tokens containing at least one such letter.",
     "sources": [

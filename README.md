@@ -58,7 +58,7 @@ Full endpoint list and the scope-selector grammar: [docs/API.md](docs/API.md).
 ### As a library
 
 ```js
-import { computeProgress, ayahStats, locate, totals } from 'quran-detailed-analytics';
+import { computeProgress, ayahStats, locate, totals } from 'quran-analytics';
 
 computeProgress({ scope: 'juz:30', memorized: '78-90' }).percent; // letter-weighted %
 ayahStats(2, 282);   // { letters: 547, words: 128, percentOfQuran: {...} }

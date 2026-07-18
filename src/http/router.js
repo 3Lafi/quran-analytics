@@ -16,7 +16,7 @@ function intParam(text, what) {
 }
 
 const API_INDEX = {
-    name: 'quran-detailed-analytics',
+    name: 'quran-analytics',
     version: 'v1',
     docs: 'https://tanzil.net attribution required (CC BY 3.0). See project docs/API.md.',
     endpoints: [

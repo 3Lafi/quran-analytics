@@ -190,7 +190,7 @@ const surahs = meta.suras.map(s => ({
 
 const dataset = {
     meta: {
-        dataset: 'quran-detailed-analytics',
+        dataset: 'quran-analytics',
         version: '1.0.0',
         generatedAt: new Date().toISOString(),
         numbering: 'Kufan/Hafs numbering, 6236 ayahs. The unnumbered basmala opening 112 surahs is excluded from all letter/word counts.',
