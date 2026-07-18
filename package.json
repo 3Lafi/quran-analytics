@@ -1,0 +1,33 @@
+{
+    "name": "quran-detailed-analytics",
+    "version": "1.0.0",
+    "description": "Quran structural analytics dataset + zero-dependency query library and REST API: per-ayah letter/word counts, surah/juz/hizb/rub/ruku/page/manzil divisions, and letter-weighted progress calculations.",
+    "type": "module",
+    "main": "src/index.js",
+    "exports": {
+        ".": "./src/index.js",
+        "./dataset": "./src/domain/dataset.js",
+        "./structure": "./src/domain/structure.js",
+        "./stats": "./src/domain/stats.js",
+        "./progress": "./src/domain/progress.js",
+        "./data": "./data/generated/quran-analytics.json"
+    },
+    "scripts": {
+        "build": "node src/build/generate-dataset.mjs",
+        "build:wisam": "node src/build/generate-dataset.mjs --wisam ../Wisam/js/core/quran-letter-counts.js",
+        "test": "node --test",
+        "serve": "node src/http/server.mjs"
+    },
+    "engines": {
+        "node": ">=18"
+    },
+    "license": "MIT",
+    "keywords": [
+        "quran",
+        "analytics",
+        "tanzil",
+        "hifz",
+        "memorization",
+        "api"
+    ]
+}
