@@ -16,7 +16,8 @@
         "build": "node src/build/generate-dataset.mjs",
         "build:wisam": "node src/build/generate-dataset.mjs --wisam ../Wisam/js/core/quran-letter-counts.js",
         "test": "node --test",
-        "serve": "node src/http/server.mjs"
+        "serve": "node src/http/server.mjs",
+        "site": "node web/serve.mjs"
     },
     "engines": {
         "node": ">=18"

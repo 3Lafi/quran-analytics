@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quran Detailed Analytics</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+    <div class="site-header-inner">
+        <div class="site-title">
+            <h1>Quran Detailed Analytics</h1>
+            <span class="tagline">Structural statistics computed from the Tanzil Uthmani text</span>
+        </div>
+        <nav class="tabs" id="tabs">
+            <button data-view="overview" class="active">Overview</button>
+            <button data-view="browse">Browse</button>
+            <button data-view="progress">Progress</button>
+            <button data-view="lookup">Ayah Lookup</button>
+        </nav>
+    </div>
+</header>
+
+<main id="main">
+    <div class="loading" id="loading">Loading dataset…</div>
+
+    <!-- Overview -->
+    <section class="view" id="view-overview">
+        <h2 class="view-title">Overview</h2>
+        <p class="view-desc">Every number below is computed from the Tanzil Uthmani text and metadata by a validated build pipeline — nothing is hand-entered.</p>
+        <div class="card-grid" id="overview-cards"></div>
+
+        <div class="panel">
+            <h3>Computed vs. traditional totals</h3>
+            <p class="muted" id="traditional-note"></p>
+            <table>
+                <thead><tr><th></th><th>Computed</th><th>Traditional</th><th>Difference</th></tr></thead>
+                <tbody id="traditional-table"></tbody>
+            </table>
+        </div>
+
+        <div class="panel">
+            <h3>Basmala</h3>
+            <p class="muted">The unnumbered basmala opening 112 surahs is excluded from all letter/word counts above. Included separately here.</p>
+            <div class="kv-grid" id="basmala-grid"></div>
+        </div>
+    </section>
+
+    <!-- Browse -->
+    <section class="view" id="view-browse">
+        <h2 class="view-title">Browse</h2>
+        <p class="view-desc">Explore surahs and every mushaf division (juz, hizb, rubʿ, manzil, rukuʿ, page) with letter/word stats and share of the whole Quran.</p>
+        <div class="toolbar">
+            <div class="field">
+                <label for="browse-type">Division</label>
+                <select id="browse-type">
+                    <option value="surah">Surah (114)</option>
+                    <option value="juz">Juz (30)</option>
+                    <option value="hizb">Hizb (60)</option>
+                    <option value="rub">Rubʿ (240)</option>
+                    <option value="manzil">Manzil (7)</option>
+                    <option value="ruku">Rukuʿ (556)</option>
+                    <option value="page">Page (604)</option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="browse-search">Search</label>
+                <input type="text" id="browse-search" placeholder="name or number…">
+            </div>
+        </div>
+        <div class="table-scroll">
+            <table>
+                <thead id="browse-thead"></thead>
+                <tbody id="browse-tbody"></tbody>
+            </table>
+        </div>
+        <div class="panel" id="browse-detail" style="display:none;"></div>
+    </section>
+
+    <!-- Progress -->
+    <section class="view" id="view-progress">
+        <h2 class="view-title">Memorization progress</h2>
+        <p class="view-desc">Progress weighted by actual text volume, not ayah count — Taa-Haa 20:1 has 2 letters, 2:282 has 547. Counting ayahs equally would distort progress by two orders of magnitude on pairs like that.</p>
+
+        <div class="panel">
+            <div class="toolbar">
+                <div class="field">
+                    <label for="progress-scope">Scope selector</label>
+                    <input type="text" id="progress-scope" value="all">
+                </div>
+                <div class="field">
+                    <label for="progress-memorized">Memorized selector</label>
+                    <input type="text" id="progress-memorized" value="" placeholder="e.g. 78-85">
+                </div>
+                <div class="field">
+                    <label for="progress-weight">Weight</label>
+                    <select id="progress-weight">
+                        <option value="letters" selected>Letters</option>
+                        <option value="words">Words</option>
+                        <option value="ayahs">Ayahs</option>
+                    </select>
+                </div>
+                <button class="primary" id="progress-compute">Compute</button>
+            </div>
+            <div class="toolbar" id="progress-presets"></div>
+            <p class="muted">Grammar: <code>all</code> · <code>5</code> (surah) · <code>78-114</code> · <code>2:255</code> · <code>2:1-141</code> · <code>juz:30</code> · <code>hizb:1-4</code> · <code>rub:1-8</code> · <code>manzil:7</code> · <code>ruku:10</code> · <code>page:600-604</code> — comma-separated, items may overlap.</p>
+            <div id="progress-error"></div>
+            <div id="progress-result"></div>
+        </div>
+    </section>
+
+    <!-- Lookup -->
+    <section class="view" id="view-lookup">
+        <h2 class="view-title">Ayah lookup</h2>
+        <p class="view-desc">Look up one ayah's stats and its position in every mushaf division.</p>
+        <div class="panel">
+            <div class="toolbar">
+                <div class="field">
+                    <label for="lookup-surah">Surah</label>
+                    <input type="number" id="lookup-surah" min="1" max="114" value="2">
+                </div>
+                <div class="field">
+                    <label for="lookup-ayah">Ayah</label>
+                    <input type="number" id="lookup-ayah" min="1" value="255">
+                </div>
+                <button class="primary" id="lookup-go">Look up</button>
+            </div>
+            <div id="lookup-error"></div>
+            <div id="lookup-result"></div>
+        </div>
+    </section>
+</main>
+
+<footer class="site-footer">
+    Data derived from Tanzil Quran Text (Uthmani, v1.1) and Tanzil Quran Metadata —
+    © Tanzil Project, <a href="https://tanzil.net" target="_blank" rel="noopener">tanzil.net</a>, CC BY 3.0.
+</footer>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -30,7 +30,17 @@ for why classical and computed totals legitimately differ.
 npm run build   # regenerate data/generated/quran-analytics.json from Tanzil sources
 npm test        # 25 integrity + behavior tests
 npm run serve   # REST API on http://localhost:8331 (PORT env to change)
+npm run site    # website on http://localhost:8332 (PORT env to change)
 ```
+
+### As a website
+
+`web/` is a static, zero-dependency, zero-build-step dashboard over the same dataset:
+Overview totals, a Browse view for every division type, a letter-weighted progress
+calculator, and single-ayah lookup. `npm run site` serves it — no bundler, no framework.
+It reads `data/generated/quran-analytics.json` directly, so it always reflects the
+current build. See [web/js/domain.js](web/js/domain.js) for the browser port of the
+domain layer (same algorithms as `src/domain`, adapted to `fetch` instead of `node:fs`).
 
 ### As an API
 
@@ -70,6 +80,7 @@ data/generated/   quran-analytics.json — the build artifact, never hand-edited
 src/build/        parsing + counting + validation pipeline (npm run build)
 src/domain/       pure queries: dataset, structure, stats, selectors, progress
 src/http/         zero-dependency REST server over the domain layer
+web/              static dashboard site (browse, progress, lookup) — npm run site
 tests/            node --test suite
 docs/             architecture, API, data dictionary, methodology, specs
 ```
