@@ -5,14 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Quran Detailed Analytics</title>
 <link rel="stylesheet" href="css/style.css">
+<script>
+    // Applied before first paint to avoid a flash of the wrong theme.
+    const storedTheme = localStorage.getItem('theme');
+    if (storedTheme) document.documentElement.dataset.theme = storedTheme;
+</script>
 </head>
 <body>
 
 <header class="site-header">
     <div class="site-header-inner">
-        <div class="site-title">
-            <h1>Quran Detailed Analytics</h1>
-            <span class="tagline">Structural statistics computed from the Tanzil Uthmani text</span>
+        <div class="site-title-row">
+            <div class="site-title">
+                <h1>Quran Detailed Analytics</h1>
+                <span class="tagline">Structural statistics computed from the Tanzil Uthmani text</span>
+            </div>
+            <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark theme" aria-label="Toggle light/dark theme">🌙</button>
         </div>
         <nav class="tabs" id="tabs">
             <button data-view="overview" class="active">Overview</button>
@@ -31,6 +39,16 @@
         <h2 class="view-title">Overview</h2>
         <p class="view-desc">Every number below is computed from the Tanzil Uthmani text and metadata by a validated build pipeline — nothing is hand-entered.</p>
         <div class="card-grid" id="overview-cards"></div>
+
+        <div class="panel">
+            <h3>Meccan vs. Medinan <span class="muted" style="font-weight:400">(by letters)</span></h3>
+            <div class="donut-row" id="revelation-donut"></div>
+        </div>
+
+        <div class="panel">
+            <h3>Surah length by letters <span class="muted" style="font-weight:400">(surah order 1–114)</span></h3>
+            <div class="bar-chart-wrap" id="surah-length-chart"></div>
+        </div>
 
         <div class="panel">
             <h3>Computed vs. traditional totals</h3>

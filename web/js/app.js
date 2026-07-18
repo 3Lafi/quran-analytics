@@ -1,9 +1,39 @@
 import * as domain from './domain.js';
+import { barChart, donutChart } from './charts.js';
 
 const fmt = n => n.toLocaleString('en-US');
 const pct = n => `${n.toFixed(2)}%`;
+const percentShare = (part, whole) => (whole === 0 ? 0 : (part / whole) * 100);
+
+// ---------- theme ----------
+
+const themeToggle = document.getElementById('theme-toggle');
+const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+
+function effectiveTheme() {
+    return document.documentElement.dataset.theme || (prefersDark.matches ? 'dark' : 'light');
+}
+
+function updateThemeIcon() {
+    themeToggle.textContent = effectiveTheme() === 'dark' ? '☀️' : '🌙';
+}
+
+themeToggle.addEventListener('click', () => {
+    const next = effectiveTheme() === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    localStorage.setItem('theme', next);
+    updateThemeIcon();
+});
+
+updateThemeIcon();
 
 // ---------- routing ----------
+//
+// Hash shapes: #overview · #browse/<type>/<n> · #progress?scope=..&memorized=..&weight=..
+// · #lookup/<surah>/<ayah>. applyRoute() is the single place that reads the
+// hash and renders; every UI action calls navigate() instead of touching
+// location.hash or the view-render functions directly, so the address bar
+// and the visible state can never drift apart.
 
 const tabsEl = document.getElementById('tabs');
 const views = {
@@ -13,21 +43,54 @@ const views = {
     lookup: document.getElementById('view-lookup'),
 };
 
-function showView(name) {
-    for (const [key, el] of Object.entries(views)) el.classList.toggle('active', key === name);
-    for (const btn of tabsEl.querySelectorAll('button')) btn.classList.toggle('active', btn.dataset.view === name);
-    location.hash = name;
+function parseHash() {
+    const raw = location.hash.replace(/^#/, '');
+    const [path, query] = raw.split('?');
+    const parts = path.split('/').filter(Boolean);
+    const view = views[parts[0]] ? parts[0] : 'overview';
+    const params = Object.fromEntries(new URLSearchParams(query || ''));
+    return { view, segments: parts.slice(1), params };
+}
+
+function navigate(view, segments = [], params = {}) {
+    let hash = '#' + [view, ...segments].join('/');
+    const qs = new URLSearchParams(params).toString();
+    if (qs) hash += '?' + qs;
+    // hashchange fires asynchronously (or not at all if the hash is
+    // unchanged), so render synchronously here too for instant feedback;
+    // the listener below just keeps back/forward and hand-edited URLs in sync.
+    if (location.hash !== hash) location.hash = hash;
+    applyRoute();
+}
+
+function applyRoute() {
+    const { view, segments, params } = parseHash();
+    for (const [key, el] of Object.entries(views)) el.classList.toggle('active', key === view);
+    for (const btn of tabsEl.querySelectorAll('button')) btn.classList.toggle('active', btn.dataset.view === view);
+
+    if (view === 'browse') {
+        const validTypes = ['surah', ...domain.DIVISION_TYPES];
+        browseType.value = validTypes.includes(segments[0]) ? segments[0] : browseType.value;
+        renderBrowseList();
+        if (segments[1]) selectBrowseRow(Number(segments[1]));
+    } else if (view === 'progress') {
+        if (params.scope !== undefined) document.getElementById('progress-scope').value = params.scope;
+        if (params.memorized !== undefined) document.getElementById('progress-memorized').value = params.memorized;
+        if (params.weight !== undefined) document.getElementById('progress-weight').value = params.weight;
+        computeProgress();
+    } else if (view === 'lookup') {
+        if (segments[0]) document.getElementById('lookup-surah').value = segments[0];
+        if (segments[1]) document.getElementById('lookup-ayah').value = segments[1];
+        runLookup();
+    }
 }
 
 tabsEl.addEventListener('click', e => {
     const btn = e.target.closest('button[data-view]');
-    if (btn) showView(btn.dataset.view);
+    if (btn) navigate(btn.dataset.view);
 });
 
-window.addEventListener('hashchange', () => {
-    const name = location.hash.replace('#', '');
-    if (views[name]) showView(name);
-});
+window.addEventListener('hashchange', applyRoute);
 
 // ---------- overview ----------
 
@@ -48,6 +111,29 @@ function renderOverview() {
         <tr><td>Words</td><td>${fmt(t.words)}</td><td>${fmt(t.traditionalTotals.words)}</td><td>${diff(t.words, t.traditionalTotals.words)}</td></tr>
         <tr><td>Letters</td><td>${fmt(t.letters)}</td><td>${fmt(t.traditionalTotals.letters)}</td><td>${diff(t.letters, t.traditionalTotals.letters)}</td></tr>
     `;
+
+    const surahs = domain.listSurahs();
+    const meccan = surahs.filter(s => s.type === 'Meccan').reduce((a, s) => a + s.letters, 0);
+    const medinan = surahs.filter(s => s.type === 'Medinan').reduce((a, s) => a + s.letters, 0);
+    const donutSegments = [
+        { label: 'Meccan', value: meccan, color: 'var(--accent)' },
+        { label: 'Medinan', value: medinan, color: 'var(--chart-2)' },
+    ];
+    document.getElementById('revelation-donut').innerHTML = donutChart(donutSegments) + `
+        <div class="chart-legend">
+            ${donutSegments.map(seg => `
+                <div class="legend-item">
+                    <span class="swatch" style="background:${seg.color}"></span>
+                    <span>${seg.label}</span>
+                    <span class="legend-value">${fmt(seg.value)} letters (${pct(percentShare(seg.value, meccan + medinan))})</span>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    const surahLetters = surahs.map(s => s.letters);
+    const surahTitles = surahs.map(s => `${s.number}. ${s.tname} — ${fmt(s.letters)} letters`);
+    document.getElementById('surah-length-chart').innerHTML = barChart(surahLetters, { titles: surahTitles });
 
     const b = t.basmala;
     document.getElementById('basmala-grid').innerHTML = `
@@ -117,7 +203,8 @@ function renderBrowseDetail(n) {
                 <div class="kv"><div class="k">% by letters</div><div class="v">${pct(s.percentOfQuran.byLetters)}</div></div>
                 <div class="kv"><div class="k">Revelation order</div><div class="v">${s.revelationOrder}</div></div>
             </div>
-            <h3>Per-ayah</h3>
+            <h3>Per-ayah letters</h3>
+            <div class="bar-chart-wrap" id="surah-ayah-chart"></div>
             <div class="table-scroll" style="max-height:300px">
                 <table>
                     <thead><tr><th>Ayah</th><th>Letters</th><th>Words</th></tr></thead>
@@ -125,6 +212,9 @@ function renderBrowseDetail(n) {
                 </table>
             </div>
         `;
+        document.getElementById('surah-ayah-chart').innerHTML = barChart(letters, {
+            titles: letters.map((l, i) => `${s.number}:${i + 1} — ${fmt(l)} letters`),
+        });
     } else {
         const label = { juz: 'Juz', hizb: 'Hizb', rub: 'Rubʿ', manzil: 'Manzil', ruku: 'Rukuʿ', page: 'Page' }[type];
         const d = domain.divisionStats(type, n);
@@ -143,14 +233,17 @@ function renderBrowseDetail(n) {
     }
 }
 
-browseType.addEventListener('change', renderBrowseList);
+function selectBrowseRow(n) {
+    for (const row of browseTbody.querySelectorAll('tr')) row.classList.toggle('selected', Number(row.dataset.n) === n);
+    renderBrowseDetail(n);
+}
+
+browseType.addEventListener('change', () => navigate('browse', [browseType.value]));
 browseSearch.addEventListener('input', renderBrowseList);
 browseTbody.addEventListener('click', e => {
     const tr = e.target.closest('tr[data-n]');
     if (!tr) return;
-    for (const row of browseTbody.querySelectorAll('tr')) row.classList.remove('selected');
-    tr.classList.add('selected');
-    renderBrowseDetail(Number(tr.dataset.n));
+    navigate('browse', [browseType.value, tr.dataset.n]);
 });
 
 // ---------- progress ----------
@@ -171,9 +264,7 @@ document.getElementById('progress-presets').addEventListener('click', e => {
     const btn = e.target.closest('button[data-i]');
     if (!btn) return;
     const p = PRESETS[Number(btn.dataset.i)];
-    document.getElementById('progress-scope').value = p.scope;
-    document.getElementById('progress-memorized').value = p.memorized;
-    computeProgress();
+    navigate('progress', [], { scope: p.scope, memorized: p.memorized, weight: document.getElementById('progress-weight').value });
 });
 
 function computeProgress() {
@@ -220,11 +311,19 @@ function computeProgress() {
     `;
 }
 
-document.getElementById('progress-compute').addEventListener('click', computeProgress);
-for (const id of ['progress-scope', 'progress-memorized']) {
-    document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') computeProgress(); });
+function navigateProgress() {
+    navigate('progress', [], {
+        scope: document.getElementById('progress-scope').value,
+        memorized: document.getElementById('progress-memorized').value,
+        weight: document.getElementById('progress-weight').value,
+    });
 }
-document.getElementById('progress-weight').addEventListener('change', computeProgress);
+
+document.getElementById('progress-compute').addEventListener('click', navigateProgress);
+for (const id of ['progress-scope', 'progress-memorized']) {
+    document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') navigateProgress(); });
+}
+document.getElementById('progress-weight').addEventListener('change', navigateProgress);
 
 // ---------- lookup ----------
 
@@ -264,9 +363,13 @@ function runLookup() {
     `;
 }
 
-document.getElementById('lookup-go').addEventListener('click', runLookup);
+function navigateLookup() {
+    navigate('lookup', [document.getElementById('lookup-surah').value, document.getElementById('lookup-ayah').value]);
+}
+
+document.getElementById('lookup-go').addEventListener('click', navigateLookup);
 for (const id of ['lookup-surah', 'lookup-ayah']) {
-    document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') runLookup(); });
+    document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') navigateLookup(); });
 }
 
 // ---------- boot ----------
@@ -281,13 +384,8 @@ async function boot() {
     document.getElementById('loading').remove();
 
     renderOverview();
-    renderBrowseList();
     renderProgressPresets();
-    computeProgress();
-    runLookup();
-
-    const initial = location.hash.replace('#', '');
-    showView(views[initial] ? initial : 'overview');
+    applyRoute();
 }
 
 boot();
